@@ -1,9 +1,11 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
+  const logger = new Logger('Bootstrap');
+  
   const app = await NestFactory.create(AppModule);
   
   // Global validation pipe
@@ -25,6 +27,10 @@ async function bootstrap() {
   const port = configService.get('PORT') || 3001;
   
   await app.listen(port);
-  console.log(`Application is running on port: ${port}`);
+  logger.log(`Application is running on port: ${port}`);
 }
-bootstrap();
+
+// Only run bootstrap if this file is executed directly
+if (require.main === module) {
+  bootstrap();
+}
