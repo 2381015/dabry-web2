@@ -1,8 +1,9 @@
 {
-  "dependencies": {
-    "@chakra-ui/react": "^3.16.1",
-    "@emotion/react": "^11.14.0",
-    "@emotion/styled": "^11.14.0",
-    "framer-motion": "^12.7.4"
+  "scripts": {
+    "start": "node src/index.js",
+    "vercel-build": "npm install && npm run build"
+  },
+  "engines": {
+    "node": ">=14.0.0"
   }
 }
