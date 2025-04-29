@@ -1,36 +1,51 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
-  const logger = new Logger('Bootstrap');
-  
   const app = await NestFactory.create(AppModule);
-  
-  // Global validation pipe
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      transform: true,
-      forbidNonWhitelisted: true,
-    }),
-  );
-  
-  // Enable CORS
-  app.enableCors();
-  
-  // API prefix
   app.setGlobalPrefix('api');
-  
-  const configService = app.get(ConfigService);
-  const port = configService.get('PORT') || 3001;
-  
-  await app.listen(port);
-  logger.log(`Application is running on port: ${port}`);
-}
+  app.enableCors();
 
-// Only run bootstrap if this file is executed directly
-if (require.main === module) {
-  bootstrap();
+  const config = new DocumentBuilder()
+    .setTitle('Extra Pockets API')
+    .addBearerAuth()
+    .addSecurityRequirements('bearer')
+    .build();
+  const document = SwaggerModule.createDocument(app, config);
+  // Serve raw OpenAPI JSON
+  app.use('/api/swagger-json', (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.send(document);
+  });
+
+  // Serve Swagger UI HTML (from CDN)
+  app.use('/api/swagger', (req, res) => {
+    res.send(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>API Docs</title>
+          <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist/swagger-ui.css" />
+        </head>
+        <body>
+          <div id="swagger-ui"></div>
+          <script src="https://unpkg.com/swagger-ui-dist/swagger-ui-bundle.js"></script>
+          <script>
+            window.onload = function () {
+              SwaggerUIBundle({
+                url: '/api/swagger-json',
+                dom_id: '#swagger-ui',
+              });
+            };
+          </script>
+        </body>
+      </html>
+    `);
+  });
+
+  app.useGlobalPipes(new ValidationPipe());
+  await app.listen(process.env.PORT ?? 3000);
 }
+bootstrap();
